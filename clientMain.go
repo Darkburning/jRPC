@@ -43,6 +43,6 @@ func main() {
 	res3 := client.Call("Revert", "HELLO")
 	fmt.Printf("2 + 2  = %v\n", res1[0])
 	fmt.Printf("3 * 3  = %v\n", res2[0])
-	fmt.Printf("Revert %s to %s", "HELLO", res3[0])
+	fmt.Printf("Revert %s to %s\n", "HELLO", res3[0])
 	client.Call("NoFunc", "HELLO")
 }

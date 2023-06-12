@@ -126,7 +126,7 @@ func (s *Server) Register(serviceName string, f interface{}) {
 
 func (s *Server) isMethodExists(method string) bool {
 	if _, ok := s.pending[method]; ok {
-		logger.Warnln("rpc server: Method Exists\n")
+		logger.Infoln("rpc server: Method Exists\n")
 		return true
 	} else {
 		logger.Warnln("rpc server: Method Not Exists\n")
@@ -150,16 +150,16 @@ func (s *Server) call(req *protocol.Request) ([]interface{}, error) {
 		}
 
 		// 调用函数
-		logger.Infoln(fmt.Sprintf("%v\n", inArgs))
+		logger.Debugln(fmt.Sprintf("%v\n", inArgs))
 		returnValues := s.pending[req.Method].Call(inArgs)
-		logger.Infoln("rpc server: Called Success!\n")
+		logger.Debugln("rpc server: Called Success!\n")
 
 		// 构造出参切片
 		outArgs := make([]interface{}, 0, len(returnValues))
 		for _, ret := range returnValues {
 			outArgs = append(outArgs, ret.Interface())
 		}
-		logger.Infoln("rpc server: Make outArgs Success!\n")
+		logger.Debugln("rpc server: Make outArgs Success!\n")
 		return outArgs, nil
 	}
 }

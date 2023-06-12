@@ -73,9 +73,9 @@ func (c *Client) Call(method string, args ...interface{}) []interface{} {
 			return nil
 		} else {
 			// call存在，服务端处理正常，读取replies的值
-			logger.Infoln("rpc client: client call success!\n")
+			logger.Debugln("rpc client: client call success!\n")
 			for idx, reply := range resp.Replies {
-				logger.Infoln(fmt.Sprintf("Value %d is : %v", idx, reply))
+				logger.Debugln(fmt.Sprintf("Value %d is : %v", idx, reply))
 			}
 			return resp.Replies
 		}
