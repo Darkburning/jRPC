@@ -3,9 +3,10 @@ package codec
 import (
 	"bufio"
 	"io"
+	"jRPC/logger"
 	"jRPC/protocol"
 	"jRPC/serializer"
-	"log"
+	"sync"
 )
 
 type ServerCodec struct {
@@ -27,24 +28,26 @@ func (c *ServerCodec) ReadRequest() (*protocol.Request, error) {
 	req := new(protocol.Request)
 	reqBytes, err := recvFrame(c.r)
 	if err != nil {
-		log.Println("rpc server: serverCodec ReadRequest: " + err.Error())
+		logger.Warnln("rpc server: serverCodec ReadRequest: " + err.Error())
 		return nil, err
 	}
-	log.Println("rpc server: ReadRequest JSON:", string(reqBytes))
+	logger.Infoln("rpc server: ReadRequest JSON:" + string(reqBytes))
 
 	err = c.serializer.Unmarshal(reqBytes, req)
 	if err != nil {
-		log.Println("rpc server: serverCodec ReadRequest: " + err.Error())
+		logger.Warnln("rpc server: serverCodec ReadRequest: " + err.Error())
 	}
 	return req, nil
 }
 
-func (c *ServerCodec) WriteResponse(errMsg error, replies []interface{}) {
+func (c *ServerCodec) WriteResponse(errMsg error, replies []interface{}, mutex *sync.Mutex) {
+	mutex.Lock()
 	defer func() {
 		err := c.w.Flush() // 将所有的缓存数据写入底层的IO接口
 		if err != nil {
 			_ = c.Close() // 发生错误则关闭
 		}
+		mutex.Unlock()
 	}()
 
 	resp := new(protocol.Response)
@@ -57,13 +60,13 @@ func (c *ServerCodec) WriteResponse(errMsg error, replies []interface{}) {
 	}
 	respBytes, err := c.serializer.Marshal(&resp)
 	if err != nil {
-		log.Println("rpc server: serverCodec WriteResponse: " + err.Error())
+		logger.Warnln("rpc server: serverCodec WriteResponse: " + err.Error())
 		return
 	}
 
 	err = sendFrame(c.w, respBytes)
 	if err != nil {
-		log.Println("rpc server: serverCodec WriteResponse: " + err.Error())
+		logger.Warnln("rpc server: serverCodec WriteResponse: " + err.Error())
 		return
 	}
 }

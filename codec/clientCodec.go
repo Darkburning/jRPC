@@ -3,9 +3,9 @@ package codec
 import (
 	"bufio"
 	"io"
+	"jRPC/logger"
 	"jRPC/protocol"
 	"jRPC/serializer"
-	"log"
 	"net"
 )
 
@@ -29,12 +29,12 @@ func (c *ClientCodec) ReadResponse() (*protocol.Response, error) {
 	resp := new(protocol.Response)
 	byteResp, err := recvFrame(c.r)
 	if err != nil {
-		log.Println("rpc client: clientCodec ReadResponse: " + err.Error())
+		logger.Warnln("rpc client: clientCodec ReadResponse: " + err.Error())
 		return nil, err
 	}
 	err = c.serializer.Unmarshal(byteResp, resp)
 	if err != nil {
-		log.Println("rpc client: clientCodec ReadResponse: " + err.Error())
+		logger.Warnln("rpc client: clientCodec ReadResponse: " + err.Error())
 		return nil, err
 	}
 	return resp, nil
@@ -44,20 +44,20 @@ func (c *ClientCodec) WriteRequest(req *protocol.Request) {
 	defer func(w *bufio.Writer) {
 		err := w.Flush()
 		if err != nil {
-			log.Println("rpc client: clientCodec WriteRequest: " + err.Error())
+			logger.Warnln("rpc client: clientCodec WriteRequest: " + err.Error())
 		}
 	}(c.w)
 
 	reqBytes, err := c.serializer.Marshal(req)
 	if err != nil {
-		log.Println("rpc client: clientCodec WriteRequest: " + err.Error())
+		logger.Warnln("rpc client: clientCodec WriteRequest: " + err.Error())
 		return
 	}
-	log.Println("rpc client: Request JSON:", string(reqBytes))
+	logger.Infoln("rpc client: Request JSON:" + string(reqBytes))
 
 	err = sendFrame(c.w, reqBytes)
 	if err != nil {
-		log.Println("rpc client: clientCodec WriteRequest: " + err.Error())
+		logger.Warnln("rpc client: clientCodec WriteRequest: " + err.Error())
 		return
 	}
 

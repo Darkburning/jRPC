@@ -1,10 +1,10 @@
-package main
+package cs
 
 import (
 	"fmt"
 	"jRPC/codec"
+	"jRPC/logger"
 	"jRPC/protocol"
-	"log"
 	"net"
 	"sync"
 	"time"
@@ -40,15 +40,15 @@ func (c *Client) Call(method string, args ...interface{}) []interface{} {
 	for err == nil {
 		resp, err := c.clientCodec.ReadResponse()
 		if err != nil {
-			log.Println("rpc client: client receive: " + err.Error())
+			logger.Warnln("rpc client: client receive: " + err.Error())
 		}
 		if resp.Err != "" {
-			log.Println("rpc client: client receive: " + resp.Err)
+			logger.Warnln("rpc client: client receive: " + resp.Err)
 			return nil
 		} else {
-			log.Printf("rpc client: client call success!\n")
+			logger.Infoln("rpc client: client call success!\n")
 			for idx, reply := range resp.Replies {
-				log.Printf("Value %d is : %v\n", idx, reply)
+				logger.Infoln(fmt.Sprintf("Value %d is : %v", idx, reply))
 			}
 			return resp.Replies
 		}
@@ -70,7 +70,7 @@ func Dial(network string, addr string) (*Client, error) {
 		// 创建子协程，创建一个客户端
 		ch := make(chan *Client)
 		go func() {
-			//time.Sleep(time.Second * 4) for test
+			//time.Sleep(time.Second * 4) // for test
 			ch <- NewClient(conn)
 		}()
 

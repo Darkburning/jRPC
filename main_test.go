@@ -2,11 +2,12 @@ package main
 
 import (
 	"fmt"
+	. "jRPC/cs"
+	. "jRPC/service"
 	"log"
 	"net"
+	"testing"
 )
-
-const network = "tcp"
 
 func startServer(ch chan string) {
 	server := NewServer()
@@ -14,7 +15,7 @@ func startServer(ch chan string) {
 	server.Register("Product", Product)
 	server.Register("Sleep", Sleep)
 
-	lis, err := net.Listen(network, ":0")
+	lis, err := net.Listen("tcp", ":0")
 	if err != nil {
 		log.Fatal("server listen failed")
 	}
@@ -23,13 +24,40 @@ func startServer(ch chan string) {
 	server.Accept(lis)
 }
 
-func main() {
-	//log.SetFlags(0)
+func TestServerHandleTimeOut(t *testing.T) {
+	t.Parallel()
+	ch := make(chan string)
+	go startServer(ch)
+
+	addr := <-ch
+	client, err := Dial("tcp", addr)
+	if err != nil {
+		log.Fatal(err)
+	}
+	client.Call("Sleep", 4)
+}
+
+func TestNewClientTimeOut(t *testing.T) {
+	t.Parallel()
+	ch := make(chan string)
+	go startServer(ch)
+
+	addr := <-ch
+	client, err := Dial("tcp", addr)
+	if err != nil {
+		log.Fatal(err)
+	}
+	client.Call("Sleep", 4)
+}
+
+func TestAll(t *testing.T) {
+	t.Parallel()
+	log.SetFlags(0)
 	ch := make(chan string)
 	go startServer(ch)
 	addr := <-ch
 
-	client, err := Dial(network, addr)
+	client, err := Dial("tcp", addr)
 	if err != nil {
 		log.Fatal("Client Dial Failed")
 	}

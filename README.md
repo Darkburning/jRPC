@@ -11,7 +11,11 @@ clientCodec实现Close、ReadResponseHeader、ReadResponseBody、WriteRequest;\
 io实现sendFrame和recvFrame将每个消息分为记录消息体长度消息头（利用binary/Uvarint）和消息体，从而解决粘包问题
 其中封装了辅助函数read、write用于确定消息长度后进行读写\
 
-main: 定义客户端和服务端以及main函数及服务
+cs: 定义客户端和服务端
+
+service: 定义服务
+
+
 
 ## 项目启动方式
 
