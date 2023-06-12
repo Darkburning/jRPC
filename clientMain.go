@@ -14,15 +14,15 @@ var (
 )
 
 func main() {
-	flag.StringVar(&clientIp, "i", "", logger.WarnMsg("client connect ip   usage:-l <ipv4/ipv6>"))
+	flag.StringVar(&clientIp, "i", "", logger.WarnMsg("client connect ip   usage:-i <ipv4/ipv6>"))
 	flag.StringVar(&clientPort, "p", "", logger.WarnMsg("client connect port   usage:-p <port>"))
 	flag.Parse()
 
 	if clientIp == "" {
-		logger.Fatalln("client connect ip is required")
+		logger.Fatalln("client's connect ip is required")
 	}
 	if clientPort == "" {
-		logger.Fatalln("client connect port is required")
+		logger.Fatalln("client's connect port is required")
 	}
 
 	addrStr := fmt.Sprintf("%s:%s", clientIp, clientPort)
@@ -44,4 +44,5 @@ func main() {
 	fmt.Printf("2 + 2  = %v\n", res1[0])
 	fmt.Printf("3 * 3  = %v\n", res2[0])
 	fmt.Printf("Revert %s to %s", "HELLO", res3[0])
+	client.Call("NoFunc", "HELLO")
 }

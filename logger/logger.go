@@ -25,6 +25,7 @@ func Warnln(msg string) {
 
 func Fatalln(msg string) {
 	Logger.Println(ColorRed + msg + ColorReset)
+	os.Exit(1)
 }
 
 func Infoln(msg string) {

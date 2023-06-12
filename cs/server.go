@@ -13,8 +13,6 @@ import (
 	"time"
 )
 
-// TODO 实现服务发现接口
-
 const timeOutLimit = time.Second * 3
 
 type Server struct {
@@ -28,7 +26,7 @@ func NewServer() *Server {
 }
 
 // serveCodec 流程：读取请求，处理请求，发送响应
-// 一个codec一把锁
+// 每个serveCodec一把锁
 func (s *Server) serveCodec(sc *codec.ServerCodec) {
 	mutex := new(sync.Mutex)  // 保证写回的有序
 	wg := new(sync.WaitGroup) // 等待直到所有的请求被处理完
@@ -87,18 +85,7 @@ func (s *Server) handleRequest(sc *codec.ServerCodec, req *protocol.Request, mut
 
 	go func() {
 		{
-			// 根据函数原型构造入参切片
-			inArgs := make([]reflect.Value, 0, len(req.Args))
-			funcType := s.pending[req.Method].Type()
-			for i := 0; i < funcType.NumIn(); i++ {
-				argType := funcType.In(i)
-				argValue := req.Args[i]
-				// 将输入参数转换为反射值类型并添加到列表
-				inArg := reflect.ValueOf(argValue).Convert(argType)
-				inArgs = append(inArgs, inArg)
-			}
-
-			outArgs, err := s.call(req.Method, inArgs)
+			outArgs, err := s.call(req)
 			called <- struct{}{}
 			if err != nil {
 				sc.WriteResponse(err, nil, mutex)
@@ -147,14 +134,27 @@ func (s *Server) isMethodExists(method string) bool {
 	}
 }
 
-func (s *Server) call(serviceName string, inArgs []reflect.Value) ([]interface{}, error) {
-	if !s.isMethodExists(serviceName) {
+func (s *Server) call(req *protocol.Request) ([]interface{}, error) {
+	if !s.isMethodExists(req.Method) {
 		return nil, errors.New("rpc server: no Func Error")
 	} else {
+		// 根据函数原型构造入参切片
+		inArgs := make([]reflect.Value, 0, len(req.Args))
+		funcType := s.pending[req.Method].Type()
+		for i := 0; i < funcType.NumIn(); i++ {
+			argType := funcType.In(i)
+			argValue := req.Args[i]
+			// 将输入参数转换为反射值类型并添加到列表
+			inArg := reflect.ValueOf(argValue).Convert(argType)
+			inArgs = append(inArgs, inArg)
+		}
+
+		// 调用函数
 		logger.Infoln(fmt.Sprintf("%v\n", inArgs))
-		returnValues := s.pending[serviceName].Call(inArgs)
+		returnValues := s.pending[req.Method].Call(inArgs)
 		logger.Infoln("rpc server: Called Success!\n")
 
+		// 构造出参切片
 		outArgs := make([]interface{}, 0, len(returnValues))
 		for _, ret := range returnValues {
 			outArgs = append(outArgs, ret.Interface())
