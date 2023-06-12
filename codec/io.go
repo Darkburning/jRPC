@@ -7,7 +7,6 @@ import (
 )
 
 // 将信息封装成Frame 头部编码为4字节再发送，避免粘包
-
 func sendFrame(w io.Writer, data []byte) (err error) {
 	size := make([]byte, 4)
 	if len(data) == 0 {

@@ -32,8 +32,23 @@ func NewServer() *Server {
 func (s *Server) serveCodec(sc *codec.ServerCodec) {
 	mutex := new(sync.Mutex)  // 保证写回的有序
 	wg := new(sync.WaitGroup) // 等待直到所有的请求被处理完
+
 	for {
-		req, err := sc.ReadRequest()
+		// 处理读取客户端请求数据时，读数据导致的异常/超时
+		var req *protocol.Request
+		var err error
+		read := make(chan struct{})
+		go func() {
+			req, err = sc.ReadRequest()
+			read <- struct{}{}
+		}()
+
+		select {
+		case <-time.After(timeOutLimit):
+			logger.Warnln(fmt.Sprintf("rpc server: ReadRequest timeout: expect within %v", timeOutLimit))
+		case <-read:
+			// 继续往后执行
+		}
 		if err != nil {
 			if req == nil {
 				logger.Warnln("rpc server: serveCodec readReq failed: Request empty!")
@@ -67,8 +82,8 @@ func (s *Server) ServeConn(conn io.ReadWriteCloser) {
 // handleRequest 根据请求读取入参并调用方法得到出参然后返回数据
 func (s *Server) handleRequest(sc *codec.ServerCodec, req *protocol.Request, mutex *sync.Mutex, wg *sync.WaitGroup) {
 	defer wg.Done()
-	called := make(chan struct{}) // 调用超时
-	sent := make(chan struct{})   // 回复超时
+	called := make(chan struct{}) // 处理调用映射服务的方法时，处理数据导致的异常/超时
+	sent := make(chan struct{})   // 处理发送响应数据时，写数据导致的异常/超时
 
 	go func() {
 		{
@@ -150,9 +165,8 @@ func (s *Server) call(serviceName string, inArgs []reflect.Value) ([]interface{}
 }
 
 // Accept 方法实现接收监听者的连接 开启协程处理每个到来的连接
-// 若想启动服务只需传入listener，TCP或UNIX协议均可
 func (s *Server) Accept(lis net.Listener) {
-	logger.Infoln("server start listen and server……")
+	logger.Infoln("server start listen and serve…")
 	for {
 		conn, err := lis.Accept()
 		if err != nil {

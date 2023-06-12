@@ -50,7 +50,7 @@ func TestNewClientTimeOut(t *testing.T) {
 	client.Call("Sleep", 4)
 }
 
-func TestAll(t *testing.T) {
+func TestCS(t *testing.T) {
 	t.Parallel()
 	log.SetFlags(0)
 	ch := make(chan string)
@@ -61,9 +61,8 @@ func TestAll(t *testing.T) {
 	if err != nil {
 		log.Fatal("Client Dial Failed")
 	}
-	res1 := client.Call("Sum", 2, 2, 2)
-	res2 := client.Call("Product", 3, 3, 3)
-	fmt.Printf("2 + 2 + 2 = %v\n", res1[0])
-	fmt.Printf("3 * 3 * 3 = %v\n", res2[0])
-	client.Call("Sleep", 4)
+	res1 := client.Call("Sum", 2, 2)
+	res2 := client.Call("Product", 3, 3)
+	fmt.Printf("2 + 2 = %v\n", res1[0])
+	fmt.Printf("3 * 3  = %v\n", res2[0])
 }
