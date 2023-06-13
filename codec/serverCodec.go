@@ -31,7 +31,7 @@ func (c *ServerCodec) ReadRequest() (*protocol.Request, error) {
 		logger.Warnln("rpc server: serverCodec ReadRequest: " + err.Error())
 		return nil, err
 	}
-	logger.Infoln("rpc server: ReadRequest JSON:" + string(reqBytes))
+	logger.Debugln("rpc server: ReadRequest JSON:" + string(reqBytes))
 
 	err = c.serializer.Unmarshal(reqBytes, req)
 	if err != nil {

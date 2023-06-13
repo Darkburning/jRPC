@@ -1,7 +1,6 @@
 package cs
 
 import (
-	"errors"
 	"fmt"
 	"io"
 	"jRPC/codec"
@@ -49,7 +48,7 @@ func (s *Server) serveCodec(sc *codec.ServerCodec) {
 		}
 		if err != nil {
 			if req == nil {
-				logger.Warnln("rpc server: serveCodec readReq failed: Request empty!")
+				logger.Warnln("rpc server: serveCodec readReq failed: Request empty")
 				break
 			}
 			// 发送读取错误的报文
@@ -110,33 +109,33 @@ func (s *Server) handleRequest(sc *codec.ServerCodec, req *protocol.Request, mut
 // Register 将方法注册到pending[string]reflect.Value
 func (s *Server) Register(serviceName string, f interface{}) {
 	if _, ok := s.pending[serviceName]; ok {
-		logger.Warnln("rpc server: Already Registered!")
+		logger.Warnln("rpc server: service already registered")
 		return
 	}
 
 	fVal := reflect.ValueOf(f)
 	if !fVal.IsValid() {
-		logger.Warnln("rpc server: Unable to add function to pending - invalid value")
+		logger.Warnln("rpc server: service registered failed - invalid service")
 		return
 	}
 
 	s.pending[serviceName] = fVal
-	logger.Infoln(fmt.Sprintf("rpc server: Function added to pending: %s", serviceName))
+	logger.Infoln(fmt.Sprintf("rpc server: service registered: %s", serviceName))
 }
 
 func (s *Server) isMethodExists(method string) bool {
 	if _, ok := s.pending[method]; ok {
-		logger.Infoln("rpc server: Method Exists\n")
+		logger.Debugln(fmt.Sprintf("rpc server: method %s found", method))
 		return true
 	} else {
-		logger.Warnln("rpc server: Method Not Exists\n")
+		logger.Warnln(fmt.Sprintf("rpc server: method %s not found ", method))
 		return false
 	}
 }
 
 func (s *Server) call(req *protocol.Request) ([]interface{}, error) {
 	if !s.isMethodExists(req.Method) {
-		return nil, errors.New("rpc server: no Func Error")
+		return nil, fmt.Errorf("rpc server: method %s not found", req.Method)
 	} else {
 		// 根据函数原型构造入参切片
 		inArgs := make([]reflect.Value, 0, len(req.Args))
@@ -152,21 +151,21 @@ func (s *Server) call(req *protocol.Request) ([]interface{}, error) {
 		// 调用函数
 		logger.Debugln(fmt.Sprintf("%v\n", inArgs))
 		returnValues := s.pending[req.Method].Call(inArgs)
-		logger.Debugln("rpc server: Called Success!\n")
+		logger.Infoln(fmt.Sprintf("rpc server: call %s success", req.Method))
 
 		// 构造出参切片
 		outArgs := make([]interface{}, 0, len(returnValues))
 		for _, ret := range returnValues {
 			outArgs = append(outArgs, ret.Interface())
 		}
-		logger.Debugln("rpc server: Make outArgs Success!\n")
+		logger.Debugln("rpc server: make outArgs success")
 		return outArgs, nil
 	}
 }
 
 // Accept 方法实现接收监听者的连接 开启协程处理每个到来的连接
 func (s *Server) Accept(lis net.Listener) {
-	logger.Infoln("server start listen and serve…")
+	logger.Infoln("rpc server: listen and serve......")
 	for {
 		conn, err := lis.Accept()
 		if err != nil {

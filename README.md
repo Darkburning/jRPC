@@ -1,4 +1,4 @@
-## 项目架构
+## 项目结构
 
 serializer: 序列化器，实现了serializer接口，有Marshal和Unmarshal两个方法
 

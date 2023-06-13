@@ -33,8 +33,7 @@ func Warnln(msg string) {
 }
 
 func Fatalln(msg string) {
-	Logger.Println(ColorRed + msg + ColorReset)
-	os.Exit(1)
+	Logger.Fatalln(ColorRed + msg + ColorReset)
 }
 
 func Infoln(msg string) {
