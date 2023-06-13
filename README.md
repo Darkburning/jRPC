@@ -9,7 +9,7 @@ codec: \
 serverCodec实现:Close、ReadRequest、WriteResponse;\
 clientCodec实现Close、ReadResponse、WriteRequest;\
 io实现sendFrame和recvFrame将每个消息分为记录消息体长度消息头（利用binary/Uvarint）和消息体，从而解决粘包问题
-其中封装了辅助函数read、write用于确定消息长度后进行读写\
+其中封装了辅助函数read、write用于确定消息长度后进行读写
 
 cs: 定义客户端和服务端
 
