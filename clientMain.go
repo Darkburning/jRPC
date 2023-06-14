@@ -5,7 +5,6 @@ import (
 	"fmt"
 	. "jRPC/cs"
 	"jRPC/logger"
-	"net"
 )
 
 var (
@@ -25,19 +24,12 @@ func main() {
 		logger.Fatalln("client's connect port is required")
 	}
 
-	addrStr := fmt.Sprintf("%s:%s", clientIp, clientPort)
-	var conn net.Conn
-	var err error
-
-	conn, err = net.Dial("tcp6", fmt.Sprintf("[%s]", clientIp)+":"+clientPort)
-	if err != nil {
-		conn, err = net.Dial("tcp4", addrStr)
-	}
+	conn, err := Dial(clientIp, clientPort)
 	if err != nil {
 		logger.Fatalln(err.Error())
 	}
-
 	client := NewClient(conn)
+
 	res1 := client.Call("Sum", 2, 2)
 	res2 := client.Call("Product", 3, 3)
 	res3 := client.Call("Revert", "HELLO")
@@ -45,4 +37,5 @@ func main() {
 	fmt.Printf("3 * 3  = %v\n", res2[0])
 	fmt.Printf("Revert %s to %s\n", "HELLO", res3[0])
 	client.Call("NoFunc", "HELLO")
+	client.Call("Sleep", 4)
 }

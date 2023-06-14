@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-const timeOutLimit = time.Second * 3
+const serverTimeOut = time.Second * 3
 
 type Server struct {
 	pending map[string]reflect.Value // 维护的service列表
@@ -29,6 +29,10 @@ func NewServer() *Server {
 func (s *Server) serveCodec(sc *codec.ServerCodec) {
 	mutex := new(sync.Mutex)  // 保证写回的有序
 	wg := new(sync.WaitGroup) // 等待直到所有的请求被处理完
+	defer func() {
+		wg.Wait()
+		_ = sc.Close()
+	}()
 
 	for {
 		// 处理读取客户端请求数据时，读数据导致的异常/超时
@@ -41,26 +45,26 @@ func (s *Server) serveCodec(sc *codec.ServerCodec) {
 		}()
 
 		select {
-		case <-time.After(timeOutLimit):
-			logger.Warnln(fmt.Sprintf("rpc server: ReadRequest timeout: expect within %v", timeOutLimit))
+		case <-time.After(serverTimeOut):
+			logger.Warnln(fmt.Sprintf("rpc server: ReadRequest timeout: expect within %v", serverTimeOut))
+			return
 		case <-read:
 			// 继续往后执行
 		}
+
 		if err != nil {
 			if req == nil {
-				logger.Warnln("rpc server: serveCodec readReq failed: Request empty")
+				logger.Warnln("rpc server: serveCodec ReadRequest failed: Request empty")
 				break
 			}
 			// 发送读取错误的报文
-			logger.Warnln("rpc server: serveCodec readReq failed")
 			sc.WriteResponse(err, nil, mutex)
 			continue
 		}
 		wg.Add(1)                              // 需等待的协程+1
 		go s.handleRequest(sc, req, mutex, wg) // 利用协程并发处理请求
 	}
-	wg.Wait() // 等待所有请求的处理结束
-	_ = sc.Close()
+	// 等待所有请求的处理结束
 }
 
 func (s *Server) ServeConn(conn io.ReadWriteCloser) {
@@ -91,15 +95,14 @@ func (s *Server) handleRequest(sc *codec.ServerCodec, req *protocol.Request, mut
 				sent <- struct{}{}
 				return
 			}
-			// 发送响应报文
 			sc.WriteResponse(nil, outArgs, mutex)
 			sent <- struct{}{}
 		}
 	}()
 
 	select {
-	case <-time.After(timeOutLimit):
-		errMsg := fmt.Errorf("rpc server: handleRequest timeout: expect within %v", timeOutLimit)
+	case <-time.After(serverTimeOut):
+		errMsg := fmt.Errorf("rpc server: handleRequest timeout: expect within %v", serverTimeOut)
 		sc.WriteResponse(errMsg, nil, mutex)
 	case <-called:
 		<-sent

@@ -19,32 +19,32 @@ const (
 	LogLevelRelease
 )
 
-var Logger *log.Logger
-var LogLevel int
+var logger *log.Logger
+var logLevel int
 
 func init() {
-	Logger = log.New(os.Stdout, "", log.Ldate|log.Ltime)
-	LogLevel = LogLevelRelease
-	//LogLevel = LogLevelDebug
+	logger = log.New(os.Stdout, "", log.Ldate|log.Ltime)
+	logLevel = LogLevelRelease
+	//logLevel = LogLevelDebug
 }
 
 func Warnln(msg string) {
-	Logger.Println(ColorYellow + msg + ColorReset)
+	logger.Println(ColorYellow + msg + ColorReset)
 }
 
 func Fatalln(msg string) {
-	Logger.Fatalln(ColorRed + msg + ColorReset)
+	logger.Fatalln(ColorRed + msg + ColorReset)
 }
 
 func Infoln(msg string) {
-	Logger.Println(ColorGreen + msg + ColorReset)
+	logger.Println(ColorGreen + msg + ColorReset)
 }
 
 func Debugln(msg string) {
-	if LogLevel != LogLevelDebug {
+	if logLevel != LogLevelDebug {
 		return
 	} else {
-		Logger.Println(ColorBlue + msg + ColorReset)
+		logger.Println(ColorBlue + msg + ColorReset)
 	}
 }
 

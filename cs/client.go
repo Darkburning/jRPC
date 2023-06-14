@@ -10,6 +10,8 @@ import (
 	"time"
 )
 
+const clientTimeOut = time.Second * 3
+
 type Client struct {
 	clientCodec *codec.ClientCodec
 	sending     *sync.Mutex
@@ -41,13 +43,16 @@ func (c *Client) Call(method string, args ...interface{}) []interface{} {
 	}()
 
 	select {
-	case <-time.After(timeOutLimit):
-		logger.Warnln(fmt.Sprintf("rpc client: WriteRequest timeout: expect within %v", timeOutLimit))
+	//  超时直接返回
+	case <-time.After(clientTimeOut):
+		logger.Warnln(fmt.Sprintf("rpc client: WriteRequest timeout: expect within %v", clientTimeOut))
+		c.sending.Unlock()
+		return nil
 	case <-sent:
 		c.sending.Unlock()
 	}
 
-	// 处理等待服务器处理导致的异常/超时和从服务端接收响应时， 读数据导致的异常/超时
+	// 处理等待服务器处理导致的异常/超时和从服务端接收响应时，读数据导致的异常/超时
 	read := make(chan struct{})
 	var err error
 	var resp *protocol.Response
@@ -58,8 +63,10 @@ func (c *Client) Call(method string, args ...interface{}) []interface{} {
 		}(resp, err)
 
 		select {
-		case <-time.After(timeOutLimit):
-			logger.Warnln(fmt.Sprintf("rpc client: ReadResponse timeout: expect within %v", timeOutLimit))
+		//  超时直接返回
+		case <-time.After(clientTimeOut):
+			logger.Warnln(fmt.Sprintf("rpc client: ReadResponse timeout: expect within %v", clientTimeOut))
+			return nil
 		case <-read:
 			// 继续往后执行
 		}
@@ -83,30 +90,29 @@ func (c *Client) Call(method string, args ...interface{}) []interface{} {
 	return nil
 }
 
-// Dial 处理：与服务端建立连接,导致的异常/超时
-func Dial(network string, addr string) (*Client, error) {
-	conn, err := net.DialTimeout(network, addr, timeOutLimit)
-	if err != nil {
-		return nil, err
-	} else {
-		defer func() {
+// Dial 采用TCP连接，兼容Ipv6和Ipv4
+// 可处理：与服务端建立连接,导致的异常/超时
+func Dial(ip string, port string) (net.Conn, error) {
+	var conn net.Conn
+	var err error
+	connected := make(chan struct{})
+
+	go func() {
+		conn, err = net.DialTimeout("tcp6", fmt.Sprintf("[%s]", ip)+":"+port, clientTimeOut)
+		if err != nil {
+			logger.Debugln("rpc client: new client error: " + err.Error())
+			conn, err = net.DialTimeout("tcp4", fmt.Sprintf("%s:%s", ip, port), clientTimeOut)
 			if err != nil {
-				_ = conn.Close()
+				logger.Warnln("rpc client: new client error: " + err.Error())
 			}
-		}()
-		// 创建子协程，创建一个客户端
-		ch := make(chan *Client)
-		go func() {
-			//time.Sleep(time.Second * 4) // for test
-			ch <- NewClient(conn)
-		}()
-
-		select {
-		case <-time.After(timeOutLimit):
-			return nil, fmt.Errorf("rpc client: new client timeout: expect within %v", timeOutLimit)
-		case result := <-ch:
-			return result, nil
 		}
+		connected <- struct{}{}
+	}()
 
+	select {
+	case <-time.After(clientTimeOut):
+		return nil, fmt.Errorf("rpc client: new client timeout: expect within %v", clientTimeOut)
+	case <-connected:
+		return conn, nil
 	}
 }
