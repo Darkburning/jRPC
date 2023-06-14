@@ -83,8 +83,8 @@ func (s *Server) ServeConn(conn io.ReadWriteCloser) {
 // handleRequest 根据请求读取入参并调用方法得到出参然后返回数据
 func (s *Server) handleRequest(sc *codec.ServerCodec, req *protocol.Request, mutex *sync.Mutex, wg *sync.WaitGroup) {
 	defer wg.Done()
-	called := make(chan struct{}) // 处理调用映射服务的方法时，处理数据导致的异常/超时
-	sent := make(chan struct{})   // 处理发送响应数据时，写数据导致的异常/超时
+	called := make(chan struct{}, 1) // 处理调用映射服务的方法时，处理数据导致的异常/超时
+	sent := make(chan struct{})      // 处理发送响应数据时，写数据导致的异常/超时
 
 	go func() {
 		{
@@ -93,7 +93,6 @@ func (s *Server) handleRequest(sc *codec.ServerCodec, req *protocol.Request, mut
 			if err != nil {
 				sc.WriteResponse(err, nil, mutex)
 				sent <- struct{}{}
-				return
 			}
 			sc.WriteResponse(nil, outArgs, mutex)
 			sent <- struct{}{}
@@ -105,7 +104,16 @@ func (s *Server) handleRequest(sc *codec.ServerCodec, req *protocol.Request, mut
 		errMsg := fmt.Errorf("rpc server: handleRequest timeout: expect within %v", serverTimeOut)
 		sc.WriteResponse(errMsg, nil, mutex)
 	case <-called:
-		<-sent
+		{
+			select {
+			case <-time.After(serverTimeOut):
+				errMsg := fmt.Errorf("rpc server: handleRequest timeout: expect within %v", serverTimeOut)
+				sc.WriteResponse(errMsg, nil, mutex)
+			case <-sent:
+				// end
+			}
+
+		}
 	}
 }
 

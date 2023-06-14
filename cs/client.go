@@ -95,7 +95,7 @@ func (c *Client) Call(method string, args ...interface{}) []interface{} {
 func Dial(ip string, port string) (net.Conn, error) {
 	var conn net.Conn
 	var err error
-	connected := make(chan struct{})
+	connected := make(chan struct{}, 1)
 
 	go func() {
 		conn, err = net.DialTimeout("tcp6", fmt.Sprintf("[%s]", ip)+":"+port, clientTimeOut)

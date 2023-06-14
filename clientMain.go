@@ -37,5 +37,5 @@ func main() {
 	fmt.Printf("3 * 3  = %v\n", res2[0])
 	fmt.Printf("Revert %s to %s\n", "HELLO", res3[0])
 	client.Call("NoFunc", "HELLO")
-	client.Call("Sleep", 4)
+	//client.Call("Sleep", 4)
 }
