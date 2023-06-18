@@ -30,12 +30,15 @@ func main() {
 	}
 	client := NewClient(conn)
 
-	res1 := client.Call("Sum", 2, 2)
-	res2 := client.Call("Product", 3, 3)
-	res3 := client.Call("Revert", "HELLO")
-	fmt.Printf("2 + 2  = %v\n", res1[0])
-	fmt.Printf("3 * 3  = %v\n", res2[0])
-	fmt.Printf("Revert %s to %s\n", "HELLO", res3[0])
+	ok := client.Discover("NotExists")
+	if ok {
+		logger.Infoln("Discover Success!")
+	} else {
+		logger.Infoln("Discover failed!")
+	}
+	res1 := client.Call("Add", 2, 2)
+	res2 := client.Call("Substract", 2, 2)
+	fmt.Printf("远程调用的响应消息：%v\n", res1[0])
+	fmt.Printf("远程调用的响应消息：%v\n", res2[0])
 	client.Call("NoFunc", "HELLO")
-	//client.Call("Sleep", 4)
 }
