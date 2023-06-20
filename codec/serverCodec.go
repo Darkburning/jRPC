@@ -40,7 +40,8 @@ func (c *ServerCodec) ReadRequest() (*protocol.Request, error) {
 	return req, nil
 }
 
-func (c *ServerCodec) WriteResponse(errMsg error, replies []interface{}, mutex *sync.Mutex) {
+// WriteRes 直接把结果写回，不使用json
+func (c *ServerCodec) WriteRes(replies string, mutex *sync.Mutex) {
 	mutex.Lock()
 	defer func() {
 		err := c.w.Flush() // 将所有的缓存数据写入底层的IO接口
@@ -50,21 +51,9 @@ func (c *ServerCodec) WriteResponse(errMsg error, replies []interface{}, mutex *
 		mutex.Unlock()
 	}()
 
-	resp := new(protocol.Response)
-	resp.Replies = replies
+	respBytes := []byte(replies)
 
-	if errMsg == nil {
-		resp.Err = ""
-	} else {
-		resp.Err = errMsg.Error()
-	}
-	respBytes, err := c.serializer.Marshal(&resp)
-	if err != nil {
-		logger.Warnln("rpc server: serverCodec WriteResponse: " + err.Error())
-		return
-	}
-
-	err = sendFrame(c.w, respBytes)
+	err := sendFrame(c.w, respBytes)
 	if err != nil {
 		logger.Warnln("rpc server: serverCodec WriteResponse: " + err.Error())
 		return

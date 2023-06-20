@@ -61,7 +61,7 @@ func (s *Server) serveCodec(sc *codec.ServerCodec) {
 				break
 			}
 			// 发送读取错误的报文
-			sc.WriteResponse(err, nil, mutex)
+			//sc.WriteResponse(err, nil, mutex)
 			continue
 		}
 		wg.Add(1) // 需等待的协程+1
@@ -103,9 +103,10 @@ func (s *Server) handleDiscover(sc *codec.ServerCodec, req *protocol.Request, mu
 		replies = "The function has not been registered!"
 	}
 	go func() {
-		ret := make([]interface{}, 0, 1)
-		ret = append(ret, replies)
-		sc.WriteResponse(nil, ret, mutex)
+		//ret := make([]interface{}, 0, 1)
+		//ret = append(ret, replies)
+		//sc.WriteResponse(nil, ret, mutex)
+		sc.WriteRes(replies, mutex)
 		sent <- struct{}{}
 	}()
 
@@ -113,7 +114,7 @@ func (s *Server) handleDiscover(sc *codec.ServerCodec, req *protocol.Request, mu
 	case <-time.After(serverHandleReqTimeOut):
 		errMsg := fmt.Errorf("rpc server: handleDiscover timeout: expect within %v", serverHandleReqTimeOut)
 		logger.Warnln(errMsg.Error())
-		sc.WriteResponse(errMsg, nil, mutex)
+		//sc.WriteResponse(errMsg, nil, mutex)
 	case <-sent:
 		// end
 	}
@@ -131,12 +132,15 @@ func (s *Server) handleRequest(sc *codec.ServerCodec, req *protocol.Request, mut
 		outArgs, err := s.call(req)
 		called <- struct{}{}
 		if err != nil {
-			sc.WriteResponse(err, nil, mutex)
+			//sc.WriteResponse(err, nil, mutex)
 			sent <- struct{}{}
 			return
 		}
 		//time.Sleep(serverTimeOut + time.Second) //   处理发送响应数据时，写数据导致的异常/超时
-		sc.WriteResponse(nil, outArgs, mutex)
+		//sc.WriteResponse(nil, outArgs, mutex)
+		replies := fmt.Sprintf("%v", outArgs[0])
+		logger.Debugln("rpc server debug: replies: " + replies)
+		sc.WriteRes(replies, mutex)
 		sent <- struct{}{}
 	}()
 
@@ -144,14 +148,14 @@ func (s *Server) handleRequest(sc *codec.ServerCodec, req *protocol.Request, mut
 	case <-time.After(serverHandleReqTimeOut):
 		errMsg := fmt.Errorf("rpc server: handleRequest timeout: expect within %v", serverHandleReqTimeOut)
 		logger.Warnln(errMsg.Error())
-		sc.WriteResponse(errMsg, nil, mutex)
+		//sc.WriteResponse(errMsg, nil, mutex)
 	case <-called:
 		{
 			select {
 			case <-time.After(serverHandleReqTimeOut):
 				errMsg := fmt.Errorf("rpc server: handleRequest timeout: expect within %v", serverHandleReqTimeOut)
 				logger.Warnln(errMsg.Error())
-				sc.WriteResponse(errMsg, nil, mutex)
+				//sc.WriteResponse(errMsg, nil, mutex)
 			case <-sent:
 				// end
 			}
