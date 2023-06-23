@@ -40,5 +40,4 @@ func main() {
 	res2 := client.Call("Substract", 2, 2)
 	fmt.Printf("远程调用的响应消息：%v\n", res1)
 	fmt.Printf("远程调用的响应消息：%v\n", res2)
-	client.Call("NoFunc", "HELLO")
 }
