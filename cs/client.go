@@ -58,42 +58,39 @@ func (c *Client) Discover(method string) bool {
 	read := make(chan struct{})
 	var err error
 	var resp *protocol.Response
-	for err == nil {
-		go func(response *protocol.Response, err error) {
-			//time.Sleep(clientTimeOut + time.Second) // 测试从服务端接收响应时，读数据导致的异常/超时
-			resp, err = c.clientCodec.ReadResponse()
-			read <- struct{}{}
-		}(resp, err)
+	go func() {
+		//time.Sleep(clientTimeOut + time.Second) // 测试从服务端接收响应时，读数据导致的异常/超时
+		resp, err = c.clientCodec.ReadResponse()
+		read <- struct{}{}
+	}()
 
-		select {
-		//  超时直接返回
-		case <-time.After(clientCallTimeOut):
-			logger.Warnln(fmt.Sprintf("rpc client: ReadResponse timeout: expect within %v", clientCallTimeOut))
-			return false
-		case <-read:
-			// 继续往后执行
-		}
+	select {
+	//  超时直接返回
+	case <-time.After(clientCallTimeOut):
+		logger.Warnln(fmt.Sprintf("rpc client: ReadResponse timeout: expect within %v", clientCallTimeOut))
+		return false
+	case <-read:
+		// 继续往后执行
+	}
 
-		if err != nil {
-			logger.Warnln("rpc client: client receive: " + err.Error())
-		}
-		// 服务端处理超时
-		if resp.Err != "" {
-			logger.Warnln("rpc client: client receive: " + resp.Err)
-			return false
+	if err != nil {
+		logger.Warnln("rpc client: client receive: " + err.Error())
+	}
+	// 服务端处理超时
+	if resp.Err != "" {
+		logger.Warnln("rpc client: client receive: " + resp.Err)
+		return false
+	} else {
+		// call存在，服务端处理正常，读取replies的值
+		logger.Debugln("rpc client: client discover success\n")
+		if resp.Replies[0] == "The function has been registered!" {
+			logger.Infoln(fmt.Sprintf("The function %s has been registered!", method))
+			return true
 		} else {
-			// call存在，服务端处理正常，读取replies的值
-			logger.Debugln("rpc client: client discover success\n")
-			if resp.Replies[0] == "The function has been registered!" {
-				logger.Infoln(fmt.Sprintf("The function %s has been registered!", method))
-				return true
-			} else {
-				logger.Infoln(fmt.Sprintf("The function %s has not been registered!", method))
-				return false
-			}
+			logger.Infoln(fmt.Sprintf("The function %s has not been registered!", method))
+			return false
 		}
 	}
-	return false
 }
 
 func (c *Client) Call(method string, args ...interface{}) []interface{} {
@@ -125,39 +122,36 @@ func (c *Client) Call(method string, args ...interface{}) []interface{} {
 	read := make(chan struct{})
 	var err error
 	var resp *protocol.Response
-	for err == nil {
-		go func(response *protocol.Response, err error) {
-			//time.Sleep(clientTimeOut + time.Second) // 测试从服务端接收响应时，读数据导致的异常/超时
-			resp, err = c.clientCodec.ReadResponse()
-			read <- struct{}{}
-		}(resp, err)
+	go func() {
+		//time.Sleep(clientTimeOut + time.Second) // 测试从服务端接收响应时，读数据导致的异常/超时
+		resp, err = c.clientCodec.ReadResponse()
+		read <- struct{}{}
+	}()
 
-		select {
-		//  超时直接返回
-		case <-time.After(clientCallTimeOut):
-			logger.Warnln(fmt.Sprintf("rpc client: ReadResponse timeout: expect within %v", clientCallTimeOut))
-			return nil
-		case <-read:
-			// 继续往后执行
-		}
-		// call不存在，服务端照样处理了
-		if err != nil {
-			logger.Warnln("rpc client: client receive: " + err.Error())
-		}
-		// 服务端处理出错
-		if resp.Err != "" {
-			logger.Warnln("rpc client: client receive: " + resp.Err)
-			return nil
-		} else {
-			// call存在，服务端处理正常，读取replies的值
-			logger.Debugln("rpc client: client call success\n")
-			for idx, reply := range resp.Replies {
-				logger.Debugln(fmt.Sprintf("Value %d is : %v", idx, reply))
-			}
-			return resp.Replies
-		}
+	select {
+	//  超时直接返回
+	case <-time.After(clientCallTimeOut):
+		logger.Warnln(fmt.Sprintf("rpc client: ReadResponse timeout: expect within %v", clientCallTimeOut))
+		return nil
+	case <-read:
+		// 继续往后执行
 	}
-	return nil
+	// call不存在，服务端照样处理了
+	if err != nil {
+		logger.Warnln("rpc client: client receive: " + err.Error())
+	}
+	// 服务端处理出错
+	if resp.Err != "" {
+		logger.Warnln("rpc client: client receive: " + resp.Err)
+		return nil
+	} else {
+		// call存在，服务端处理正常，读取replies的值
+		logger.Debugln("rpc client: client call success\n")
+		for idx, reply := range resp.Replies {
+			logger.Debugln(fmt.Sprintf("Value %d is : %v", idx, reply))
+		}
+		return resp.Replies
+	}
 }
 
 // Dial 采用TCP连接，兼容Ipv6和Ipv4
