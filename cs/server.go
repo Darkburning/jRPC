@@ -60,8 +60,6 @@ func (s *Server) serveCodec(sc *codec.ServerCodec) {
 				logger.Warnln("rpc server: serveCodec ReadRequest failed: Request empty")
 				break
 			}
-			// 发送读取错误的报文
-			//sc.WriteResponse(err, nil, mutex)
 			continue
 		}
 		wg.Add(1) // 需等待的协程+1
@@ -82,7 +80,7 @@ func (s *Server) serveConn(conn io.ReadWriteCloser) {
 			return
 		}
 	}()
-	// 每个连接一个，负责编解码并读取数据
+	// 每个连接一个负责编解码并读取数据
 	serverCodec := codec.NewServerCodec(conn)
 
 	s.serveCodec(serverCodec)
@@ -103,9 +101,6 @@ func (s *Server) handleDiscover(sc *codec.ServerCodec, req *protocol.Request, mu
 		replies = "The function has not been registered!"
 	}
 	go func() {
-		//ret := make([]interface{}, 0, 1)
-		//ret = append(ret, replies)
-		//sc.WriteResponse(nil, ret, mutex)
 		sc.WriteRes(replies, mutex)
 		sent <- struct{}{}
 	}()
@@ -114,7 +109,6 @@ func (s *Server) handleDiscover(sc *codec.ServerCodec, req *protocol.Request, mu
 	case <-time.After(serverHandleReqTimeOut):
 		errMsg := fmt.Errorf("rpc server: handleDiscover timeout: expect within %v", serverHandleReqTimeOut)
 		logger.Warnln(errMsg.Error())
-		//sc.WriteResponse(errMsg, nil, mutex)
 	case <-sent:
 		// end
 	}
@@ -137,7 +131,6 @@ func (s *Server) handleRequest(sc *codec.ServerCodec, req *protocol.Request, mut
 			return
 		}
 		//time.Sleep(serverTimeOut + time.Second) //   处理发送响应数据时，写数据导致的异常/超时
-		//sc.WriteResponse(nil, outArgs, mutex)
 		replies := fmt.Sprintf("%v", outArgs[0])
 		logger.Debugln("rpc server debug: replies: " + replies)
 		sc.WriteRes(replies, mutex)
@@ -148,14 +141,12 @@ func (s *Server) handleRequest(sc *codec.ServerCodec, req *protocol.Request, mut
 	case <-time.After(serverHandleReqTimeOut):
 		errMsg := fmt.Errorf("rpc server: handleRequest timeout: expect within %v", serverHandleReqTimeOut)
 		logger.Warnln(errMsg.Error())
-		//sc.WriteResponse(errMsg, nil, mutex)
 	case <-called:
 		{
 			select {
 			case <-time.After(serverHandleReqTimeOut):
 				errMsg := fmt.Errorf("rpc server: handleRequest timeout: expect within %v", serverHandleReqTimeOut)
 				logger.Warnln(errMsg.Error())
-				//sc.WriteResponse(errMsg, nil, mutex)
 			case <-sent:
 				// end
 			}
@@ -165,8 +156,8 @@ func (s *Server) handleRequest(sc *codec.ServerCodec, req *protocol.Request, mut
 }
 
 // Register serviceList[string]reflect.Value
-func (s *Server) Register(serviceName string, f interface{}) {
-	if _, ok := s.serviceList[serviceName]; ok {
+func (s *Server) Register(service string, f interface{}) {
+	if _, ok := s.serviceList[service]; ok {
 		logger.Warnln("rpc server: service already registered")
 		return
 	}
@@ -177,8 +168,8 @@ func (s *Server) Register(serviceName string, f interface{}) {
 		return
 	}
 
-	s.serviceList[serviceName] = fVal
-	logger.Infoln(fmt.Sprintf("rpc server: service registered: %s", serviceName))
+	s.serviceList[service] = fVal
+	logger.Infoln(fmt.Sprintf("rpc server: service registered: %s", service))
 }
 
 func (s *Server) isMethodExists(method string) bool {

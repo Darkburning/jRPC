@@ -5,6 +5,7 @@ import (
 	"fmt"
 	. "jRPC/cs"
 	"jRPC/logger"
+	"sync"
 )
 
 var (
@@ -30,14 +31,26 @@ func main() {
 	}
 	client := NewClient(conn)
 
-	ok := client.Discover("NotExists")
-	if ok {
+	// 测试服务发现接口
+	if client.Discover("NotExists") {
 		logger.Infoln("Discover Success!")
 	} else {
 		logger.Infoln("Discover failed!")
 	}
-	res1 := client.Call("Add", 2, 2)
-	res2 := client.Call("Substract", 2, 2)
-	fmt.Printf("远程调用的响应消息：%v\n", res1)
-	fmt.Printf("远程调用的响应消息：%v\n", res2)
+	// 测试服务调用，支持客户端并发
+	wg := new(sync.WaitGroup)
+	wg.Add(2)
+	go func(wg *sync.WaitGroup) {
+		defer wg.Done()
+		res1 := client.Call("Add", 2, 2)
+		fmt.Printf("Add远程调用的响应消息：%v\n", res1)
+	}(wg)
+
+	go func(wg *sync.WaitGroup) {
+		defer wg.Done()
+		res2 := client.Call("Substract", 2, 2)
+		fmt.Printf("Substract远程调用的响应消息：%v\n", res2)
+	}(wg)
+
+	wg.Wait()
 }

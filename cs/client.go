@@ -15,7 +15,7 @@ const clientCallTimeOut = time.Second * 4
 
 type Client struct {
 	clientCodec *codec.ClientCodec
-	sending     *sync.Mutex
+	sending     *sync.Mutex // 保证客户端并发安全
 }
 
 func NewClient(conn net.Conn) *Client {
@@ -105,16 +105,16 @@ func (c *Client) Call(method string, args ...interface{}) string {
 		c.sending.Unlock()
 		return fmt.Sprintf("rpc client: WriteRequest timeout: expect within %v", clientCallTimeOut)
 	case <-sent:
-		c.sending.Unlock()
 	}
 
 	// 处理等待服务器处理导致的异常/超时和从服务端接收响应时，读数据导致的异常/超时
 	read := make(chan struct{}, 1)
-	var resp *string
+	var res *string
 	go func() {
 		//time.Sleep(clientTimeOut + time.Second) // 测试从服务端接收响应时，读数据导致的异常/超时
-		resp, _ = c.clientCodec.ReadRes()
+		res, _ = c.clientCodec.ReadRes()
 		read <- struct{}{}
+		c.sending.Unlock()
 	}()
 
 	select {
@@ -124,7 +124,7 @@ func (c *Client) Call(method string, args ...interface{}) string {
 		return fmt.Sprintf("rpc client: ReadResponse timeout: expect within %v", clientCallTimeOut)
 	case <-read:
 		logger.Debugln("rpc client: client call success\n")
-		return *resp
+		return *res
 	}
 
 }

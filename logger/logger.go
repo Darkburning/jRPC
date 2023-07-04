@@ -29,22 +29,22 @@ func init() {
 }
 
 func Warnln(msg string) {
-	logger.Println(ColorYellow + msg + ColorReset)
+	logger.Println(ColorYellow + "[Warn]: " + msg + ColorReset)
 }
 
 func Fatalln(msg string) {
-	logger.Fatalln(ColorRed + msg + ColorReset)
+	logger.Fatalln(ColorRed + "[Error]: " + msg + ColorReset)
 }
 
 func Infoln(msg string) {
-	logger.Println(ColorGreen + msg + ColorReset)
+	logger.Println(ColorGreen + "[Info]: " + msg + ColorReset)
 }
 
 func Debugln(msg string) {
 	if logLevel != LogLevelDebug {
 		return
 	} else {
-		logger.Println(ColorBlue + msg + ColorReset)
+		logger.Println(ColorBlue + "[Debug]: " + msg + ColorReset)
 	}
 }
 
