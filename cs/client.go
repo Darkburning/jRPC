@@ -115,7 +115,6 @@ func (c *Client) Call(method string, args ...interface{}) []interface{} {
 		c.sending.Unlock()
 		return nil
 	case <-sent:
-		c.sending.Unlock()
 	}
 
 	// 处理等待服务器处理导致的异常/超时和从服务端接收响应时，读数据导致的异常/超时
@@ -126,6 +125,7 @@ func (c *Client) Call(method string, args ...interface{}) []interface{} {
 		//time.Sleep(clientTimeOut + time.Second) // 测试从服务端接收响应时，读数据导致的异常/超时
 		resp, err = c.clientCodec.ReadResponse()
 		read <- struct{}{}
+		c.sending.Unlock()
 	}()
 
 	select {

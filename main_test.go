@@ -11,9 +11,8 @@ import (
 
 func startServer(ch chan string) {
 	server := NewServer()
-	server.Register("Sum", Sum)
-	server.Register("Product", Product)
-	server.Register("Sleep", Sleep)
+	server.Register("Add", Add)
+	server.Register("Multi", Multi)
 
 	lis, err := net.Listen("tcp", ":0")
 	if err != nil {
@@ -41,8 +40,8 @@ func TestCS(t *testing.T) {
 		log.Fatal("Client Dial Failed")
 	}
 	client := NewClient(conn)
-	res1 := client.Call("Sum", 2, 2)
-	res2 := client.Call("Product", 3, 3)
+	res1 := client.Call("Add", 2, 2)
+	res2 := client.Call("Multi", 3, 3)
 	fmt.Printf("2 + 2 = %v\n", res1[0])
 	fmt.Printf("3 * 3  = %v\n", res2[0])
 }
