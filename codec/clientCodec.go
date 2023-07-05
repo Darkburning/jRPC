@@ -25,7 +25,7 @@ func NewClientCodec(conn net.Conn) *ClientCodec {
 	}
 }
 
-// ReadRes 直接把string结果读出
+// ReadRes 返回string指针
 func (c *ClientCodec) ReadRes() (*string, error) {
 	byteResp, err := recvFrame(c.r)
 	if err != nil {
@@ -42,6 +42,9 @@ func (c *ClientCodec) WriteRequest(req *protocol.Request) {
 		err := w.Flush()
 		if err != nil {
 			logger.Warnln("rpc client: clientCodec WriteRequest: " + err.Error())
+		}
+		if err != nil {
+			_ = c.Close() // 发生错误则关闭
 		}
 	}(c.w)
 

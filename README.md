@@ -6,9 +6,9 @@ protocol: 协议约定,包括请求体，响应体
 
 codec: \
 编解码器模块，codec封装了serializer和TCP连接conn以及带缓冲的writer、reader;\
-serverCodec实现:Close、ReadRequest、WriteResponse;\
-clientCodec实现Close、ReadResponse、WriteRequest;\
-io实现sendFrame和recvFrame将每个消息分为记录消息体长度消息头（利用binary/Uvarint）和消息体，从而解决粘包问题
+serverCodec实现:Close、ReadRequest、WriteRes;\
+clientCodec实现Close、ReadRes、WriteRequest;\
+io实现sendFrame和recvFrame将每个消息分为记录消息体长度定长消息头和消息体，从而解决粘包问题
 其中封装了辅助函数read、write用于确定消息长度后进行读写
 
 cs: 定义客户端和服务端

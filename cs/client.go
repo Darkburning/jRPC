@@ -51,7 +51,7 @@ func (c *Client) Discover(method string) bool {
 		c.sending.Unlock()
 		return false
 	case <-sent:
-		c.sending.Unlock()
+		//
 	}
 
 	// 处理等待服务器处理导致的异常/超时和从服务端接收响应时，读数据导致的异常/超时
@@ -61,6 +61,7 @@ func (c *Client) Discover(method string) bool {
 		//time.Sleep(clientTimeOut + time.Second) // 测试从服务端接收响应时，读数据导致的异常/超时
 		resp, _ = c.clientCodec.ReadRes()
 		read <- struct{}{}
+		c.sending.Unlock()
 	}()
 
 	select {
