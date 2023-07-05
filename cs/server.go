@@ -17,7 +17,7 @@ const serverHandleReqTimeOut = time.Second * 3
 const serverReadReqTimeOut = time.Second * 5
 
 type Server struct {
-	serviceList map[string]reflect.Value // 维护的service列表
+	serviceList map[string]reflect.Value // 维护的service Map
 }
 
 func NewServer() *Server {
@@ -163,7 +163,7 @@ func (s *Server) Register(service string, f interface{}) {
 	}
 
 	fVal := reflect.ValueOf(f)
-	if !fVal.IsValid() {
+	if !fVal.IsValid() || fVal.Kind() != reflect.Func {
 		logger.Warnln("rpc server: service registered failed - invalid service")
 		return
 	}

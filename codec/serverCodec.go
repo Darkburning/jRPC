@@ -24,16 +24,16 @@ func NewServerCodec(conn io.ReadWriteCloser) *ServerCodec {
 	}
 }
 
-func (c *ServerCodec) ReadRequest() (*protocol.Request, error) {
+func (s *ServerCodec) ReadRequest() (*protocol.Request, error) {
 	req := new(protocol.Request)
-	reqBytes, err := recvFrame(c.r)
+	reqBytes, err := recvFrame(s.r)
 	if err != nil {
 		logger.Warnln("rpc server: serverCodec ReadRequest: " + err.Error())
 		return nil, err
 	}
 	logger.Debugln("rpc server: ReadRequest JSON:" + string(reqBytes))
 
-	err = c.serializer.Unmarshal(reqBytes, req)
+	err = s.serializer.Unmarshal(reqBytes, req)
 	if err != nil {
 		logger.Warnln("rpc server: serverCodec ReadRequest: " + err.Error())
 	}
@@ -41,25 +41,25 @@ func (c *ServerCodec) ReadRequest() (*protocol.Request, error) {
 }
 
 // WriteRes 直接把结果写回，不使用json
-func (c *ServerCodec) WriteRes(replies string, mutex *sync.Mutex) {
+func (s *ServerCodec) WriteRes(replies string, mutex *sync.Mutex) {
 	mutex.Lock()
 	defer func() {
-		err := c.w.Flush() // 将所有的缓存数据写入底层的IO接口
+		err := s.w.Flush() // 将所有的缓存数据写入底层的IO接口
 		if err != nil {
-			_ = c.Close() // 发生错误则关闭
+			_ = s.Close() // 发生错误则关闭
 		}
 		mutex.Unlock()
 	}()
 
 	respBytes := []byte(replies)
 
-	err := sendFrame(c.w, respBytes)
+	err := sendFrame(s.w, respBytes)
 	if err != nil {
 		logger.Warnln("rpc server: serverCodec WriteResponse: " + err.Error())
 		return
 	}
 }
 
-func (c *ServerCodec) Close() error {
-	return c.conn.Close()
+func (s *ServerCodec) Close() error {
+	return s.conn.Close()
 }
