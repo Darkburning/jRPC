@@ -126,7 +126,6 @@ func (s *Server) handleRequest(sc *codec.ServerCodec, req *protocol.Request, mut
 		outArgs, err := s.call(req)
 		called <- struct{}{}
 		if err != nil {
-			//sc.WriteResponse(err, nil, mutex)
 			sent <- struct{}{}
 			return
 		}
@@ -185,7 +184,6 @@ func (s *Server) isMethodExists(method string) bool {
 func (s *Server) call(req *protocol.Request) ([]interface{}, error) {
 	if !s.isMethodExists(req.Method) {
 		return nil, fmt.Errorf("rpc server: method %s not found", req.Method)
-		//return nil, errors.New("The function has not been registered!")
 	} else {
 		// 根据函数原型构造入参切片
 		inArgs := make([]reflect.Value, 0, len(req.Args))

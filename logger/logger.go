@@ -51,3 +51,7 @@ func Debugln(msg string) {
 func WarnMsg(msg string) string {
 	return fmt.Sprintf("%s%s%s", ColorYellow, msg, ColorReset)
 }
+
+func InfoMsg(msg string) string {
+	return fmt.Sprintf("%s%s%s", ColorGreen, msg, ColorReset)
+}

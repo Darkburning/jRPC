@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-const clientConnectTimeOut = time.Second * 3
+const clientConnectTimeOut = time.Second * 2
 const clientCallTimeOut = time.Second * 4
 
 type Client struct {
@@ -132,21 +132,16 @@ func (c *Client) Call(method string, args ...interface{}) string {
 
 // Dial 采用TCP连接，兼容Ipv6和Ipv4
 // 可处理：与服务端建立连接,导致的异常/超时
-func Dial(ip string, port string) (net.Conn, error) {
+func Dial(addr string) (net.Conn, error) {
 	var conn net.Conn
 	var err error
 	connected := make(chan struct{}, 1)
 
 	go func() {
-		conn, err = net.DialTimeout("tcp6", fmt.Sprintf("[%s]", ip)+":"+port, clientConnectTimeOut)
+		conn, err = net.DialTimeout("tcp", addr, clientConnectTimeOut)
 		if err != nil {
-			logger.Debugln("rpc client: new client error: " + err.Error())
-			conn, err = net.DialTimeout("tcp4", fmt.Sprintf("%s:%s", ip, port), clientConnectTimeOut)
-			if err != nil {
-				logger.Warnln("rpc client: new client error: " + err.Error())
-			}
+			logger.Warnln("rpc client: new client error: " + err.Error())
 		}
-		//time.Sleep(clientTimeOut + time.Second)  // 测试与服务端建立连接超时
 		connected <- struct{}{}
 	}()
 

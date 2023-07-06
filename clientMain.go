@@ -24,8 +24,9 @@ func main() {
 	if clientPort == "" {
 		logger.Fatalln("client's connect port is required")
 	}
+	addr := fmt.Sprintf("[%s]:%s", clientIp, clientPort)
 
-	conn, err := Dial(clientIp, clientPort)
+	conn, err := Dial(addr)
 	if err != nil {
 		logger.Fatalln(err.Error())
 	}
@@ -43,13 +44,13 @@ func main() {
 	go func(wg *sync.WaitGroup) {
 		defer wg.Done()
 		res1 := client.Call("Add", 2, 2)
-		fmt.Printf("Add远程调用的响应消息：%v\n", res1)
+		logger.Infoln(logger.InfoMsg(fmt.Sprintf("Add远程调用的响应消息：%v", res1)))
 	}(wg)
 
 	go func(wg *sync.WaitGroup) {
 		defer wg.Done()
 		res2 := client.Call("Substract", 2, 2)
-		fmt.Printf("Substract远程调用的响应消息：%v\n", res2)
+		logger.Infoln(logger.InfoMsg(fmt.Sprintf("Substract远程调用的响应消息：%v", res2)))
 	}(wg)
 
 	wg.Wait()
