@@ -6,11 +6,11 @@ package protocol
 */
 
 type Request struct {
-	Method string        `json:"Method"`
-	Args   []interface{} `json:"Args"`
+	Method string        `json:"Method" yaml:"Method"`
+	Args   []interface{} `json:"Args" yaml:"Args"`
 }
 
 type Response struct {
-	Err     string        `json:"err"`
-	Replies []interface{} `json:"replies"`
+	Err     string        `json:"err" yaml:"err"`
+	Replies []interface{} `json:"replies" yaml:"replies"`
 }
