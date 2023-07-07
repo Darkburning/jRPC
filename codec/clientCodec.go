@@ -37,6 +37,7 @@ func (c *ClientCodec) ReadRes() (*string, error) {
 	return &resp, nil
 
 }
+
 func (c *ClientCodec) WriteRequest(req *protocol.Request) {
 	defer func(w *bufio.Writer) {
 		err := w.Flush()

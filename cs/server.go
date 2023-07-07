@@ -57,7 +57,7 @@ func (s *Server) serveCodec(sc *codec.ServerCodec) {
 
 		if err != nil {
 			if req == nil {
-				logger.Warnln("rpc server: serveCodec ReadRequest failed: Request empty")
+				logger.Warnln("rpc server: serveCodec ReadRequest: client request finished!")
 				break
 			}
 			continue
