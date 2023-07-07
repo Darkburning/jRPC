@@ -30,12 +30,7 @@ func TestCS(t *testing.T) {
 	go startServer(ch)
 	addr := <-ch
 
-	ip, port, err := net.SplitHostPort(addr)
-	if err != nil {
-		log.Fatal("SplitHostPort error")
-	}
-
-	conn, err := Dial(ip, port)
+	conn, err := Dial(addr)
 	if err != nil {
 		log.Fatal("Client Dial Failed")
 	}
