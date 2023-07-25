@@ -24,9 +24,9 @@ logger：日志
 ## 项目启动方式
 
 测试：\
-`go test .\main_test.go  -v`
+`go test main_test.go  -v`
 
 运行：\
-服务端：` go run .\serverMain.go -p 12345 -l 127.0.0.1`\
-客户端：` go run .\clientMain.go -p 12345 -i 127.0.0.1`
+服务端：` go run serverMain.go -p 12345 -l 127.0.0.1`\
+客户端：` go run clientMain.go -p 12345 -i 127.0.0.1`
 
